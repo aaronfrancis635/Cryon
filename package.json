@@ -1,0 +1,25 @@
+{
+  "name": "cryon",
+  "version": "1.0.0",
+  "description": "Video player with discord rich presence",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brokenbroadcaster/Cryon.git"
+  },
+  "author": "brokenbroadcaster",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brokenbroadcaster/Cryon/issues"
+  },
+  "homepage": "https://github.com/brokenbroadcaster/Cryon#readme",
+  "dependencies": {
+    "discord-rich-presence": "0.0.8",
+    "electron": "^5.0.6",
+    "jquery": "^3.4.1"
+  }
+}
