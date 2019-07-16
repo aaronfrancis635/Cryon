@@ -339,8 +339,7 @@
     }
     const webview = document.getElementById('usingSite')
 
-    //FIXME: Why dooes this fire twice.. and get delayed by a page load...
-    webview.addEventListener('did-navigate-in-page', () => {
+    webview.addEventListener('media-started-playing', () => {
       webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)");
       console.log(webview.getURL());
       if (webview.getURL().match(/youtube.com/g)) {
@@ -348,8 +347,8 @@
         webview.executeJavaScript('document.querySelector("#container > h1 > yt-formatted-string").innerText',
           false, (result) => {
             if (result != null || result != '') {
-              // setDiscordState("youtube_logo", "YouTube", "Watching a video:", result);
-              console.log(result)
+              setDiscordState("youtube_logo", "YouTube", "Watching a video:", result);
+              
 
             }
           });
@@ -360,7 +359,22 @@
         //TODO: Add rich presence for 9anime
         console.log("9anime")
       }
-    })
+    });
+
+    webview.addEventListener('media-paused', () => {
+      webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)");
+      console.log(webview.getURL());
+      if (webview.getURL().match(/youtube.com/g)) {
+        console.log("youtube")
+        setDiscordState("youtube_logo", "YouTube", "Just browsing", "Looking for a video");
+      } else if (webview.getURL().match(/twitch.tv/g)) {
+        //TODO: Add rich presence for twitch
+        console.log("twitch")
+      } else if (webview.getURL().match(/9anime/g)) {
+        //TODO: Add rich presence for 9anime
+        console.log("9anime")
+      }
+    });
   </script>
 
 
