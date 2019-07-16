@@ -1,10 +1,14 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const {
+  app,
+  BrowserWindow,
+  ipcMain
+} = require('electron')
 const client = require('discord-rich-presence')('600363615337447437');
- 
-        
 
 
-  ipcMain.on('setDisc', (event, arg) => {
+
+
+ipcMain.on('setDisc', (event, arg) => {
   console.log(arg) // prints "arg"
   client.updatePresence({
     state: arg[3],
@@ -21,7 +25,7 @@ const client = require('discord-rich-presence')('600363615337447437');
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
-function createWindow () {
+function createWindow() {
 
   let loading = new BrowserWindow({
     width: 400,
