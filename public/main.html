@@ -46,21 +46,21 @@
         <a class="sidebar__logo" href="#">
           <abbr class="logo"><img src="img/logo.png" style="max-width: 30px" /></abbr>
         </a>
-        <ul class="sidebar__nav-list flex-column-nowrap" role="menubar" aria-label="Main desktop menu">
-          <li class="nav-list__item about-me active fake-button flex-column-nowrap" role="menuitem">
-            <a class="flex-row-wrap" href="#" tabindex="0">
+        <ul class="sidebar__nav-list active flex-column-nowrap" role="menubar" aria-label="Main desktop menu">
+          <li id="YouTubeButton" class="nav-list__item about-me active fake-button flex-column-nowrap" role="menuitem">
+            <a class="flex-row-wrap" href="#" onclick="useYoutube();" tabindex="0">
               <img src="img/yt_logo.png" style="max-width: 30px" />
               <span class="u-uppercase">YouTube</span>
             </a>
           </li>
-          <li class="nav-list__item skills fake-button flex-column-nowrap" role="menuitem">
-            <a class="flex-row-wrap" href="#" tabindex="0">
+          <li id="TwitchButton" class="nav-list__item skills fake-button flex-column-nowrap" role="menuitem">
+            <a class="flex-row-wrap" href="#" onclick="useTwitch();" tabindex="0">
               <img src="img/ttv_logo.png" style="max-width: 30px" />
               <span class="u-uppercase">Twitch</span>
             </a>
           </li>
-          <li class="nav-list__item my-work fake-button flex-column-nowrap" role="menuitem">
-            <a class="flex-row-wrap" href="#" tabindex="0">
+          <li id="9AnimeButton" class="nav-list__item my-work fake-button flex-column-nowrap" role="menuitem">
+            <a class="flex-row-wrap" href="#" onclick="use9Anime();" tabindex="0">
               <img src="img/9anime_logo.jpg" style="max-width: 30px" />
               <span class="u-uppercase">9Anime</span>
             </a>
@@ -139,7 +139,7 @@
               </li>
             </ul>
           </li>
-          <li class="extra-content__share fake-button flex-row-wrap" role="menuitem">
+          <!-- <li class="extra-content__share fake-button flex-row-wrap" role="menuitem">
             <a href="#" tabindex="0">
               <svg height="40" width="40" viewBox="0 0 4.53125 4.53125">
                 <g transform="scale(0.078125)" id="g4530">
@@ -156,13 +156,13 @@
               </svg>
               <span class="u-uppercase">Share</span>
             </a>
-          </li>
+          </li> -->
         </ul>
       </nav>
     </section>
     <section id="mobile-menu" class="mobile-menu navbar flex-row-wrap">
       <a class="navbar__logo" href="#">
-        <span class="logo">FB</span>
+        
       </a>
       <div class="navbar__mobile-menu">
         <div class="menu">
@@ -255,16 +255,16 @@
               </li>
             </ul>
           </li>
-          <li class="navbar__mobile-menu__item flex-row-wrap share u-uppercase fake-button" role="menuitem">
+          <!-- <li class="navbar__mobile-menu__item flex-row-wrap share u-uppercase fake-button" role="menuitem">
             <a href="#" tabindex="-1">Share</a>
-          </li>
+          </li> -->
         </ul>
       </nav>
     </section>
   </header>
-  <div id="siteContainer" style="width:100%; height:100%;">
+  <div id="siteContainer" style="width:100%; height:100%; z-index: 999">
     <webview id="usingSite" src="https://www.youtube.com"
-      style="display:inline-flex;position:absolute; left:75px; width:calc(100% - 75px); height:100%;"></webview>
+      style="display:inline-flex;position:absolute; left:75px; width:calc(100% - 75px); height:100%; z-index: 999"></webview>
   </div>
   <script id="rendered-js">
     $(document).ready(function () {
@@ -334,13 +334,38 @@
       console.log(arg)
     });
 
+    const webview = document.getElementById('usingSite')
+
+    function useYoutube(){
+      webview.loadURL("https://www.youtube.com");
+      document.getElementById('YouTubeButton').classList.add("active")
+      document.getElementById('TwitchButton').classList.remove("active")
+      document.getElementById('9AnimeButton').classList.remove("active")
+    }
+    function useTwitch(){
+      webview.loadURL("https://www.twitch.tv");
+      document.getElementById('TwitchButton').classList.add("active")
+      document.getElementById('YouTubeButton').classList.remove("active")
+      document.getElementById('9AnimeButton').classList.remove("active")
+      webview.executeJavaScript("document.querySelector('html').classList.add('tw-root--theme-dark')"); 
+    }
+    function use9Anime(){
+      webview.loadURL("http://9anime.ru");
+      document.getElementById('9AnimeButton').classList.add("active")
+      document.getElementById('YouTubeButton').classList.remove("active")
+      document.getElementById('TwitchButton').classList.remove("active")
+    }
+
     function setDiscordState(img, site, action, title) {
       ipcRenderer.send('setDisc', [img, site, action, title]);
     }
-    const webview = document.getElementById('usingSite')
+    
+    webview.addEventListener('crashed', () => {
+    console.log("crashed")
+    });
 
     webview.addEventListener('media-started-playing', () => {
-      webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)");
+      webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)"); 
       console.log(webview.getURL());
       if (webview.getURL().match(/youtube.com/g)) {
         console.log("youtube")
@@ -348,16 +373,26 @@
           false, (result) => {
             if (result != null || result != '') {
               setDiscordState("youtube_logo", "YouTube", "Watching a video:", result);
-              
-
             }
           });
       } else if (webview.getURL().match(/twitch.tv/g)) {
-        //TODO: Add rich presence for twitch
+        //TODO: Add rich presence for twitch ///// tw-root--theme-dark
         console.log("twitch")
+        webview.executeJavaScript('document.querySelector("#root > div > div.tw-flex.tw-flex-column.tw-flex-nowrap.tw-full-height > div > main > div.root-scrollable.scrollable-area.scrollable-area--suppress-scroll-x > div.simplebar-scroll-content > div > div > div.channel-root.tw-full-height > div.channel-root__player-container.tw-pd-b-2 > div > div.channel-info-bar.tw-border-b.tw-border-bottom-left-radius-large.tw-border-bottom-right-radius-large.tw-border-l.tw-border-r.tw-border-t.tw-flex.tw-flex-wrap.tw-justify-content-between.tw-lg-pd-b-0.tw-lg-pd-t-1.tw-lg-pd-x-1.tw-pd-1 > div > div > div > div.channel-info-bar__content-right.tw-full-width > div.tw-flex.tw-justify-content-between.tw-mg-b-05 > h2").innerText',
+          false, (result) => {
+            if (result != null || result != '') {
+              setDiscordState("twitch_logo", "Twitch", "Watching a Stream:", result);
+            }
+          });
       } else if (webview.getURL().match(/9anime/g)) {
         //TODO: Add rich presence for 9anime
         console.log("9anime")
+        webview.executeJavaScript('document.querySelector("#main > div > div.widget.player > div.widget-title > h1").innerText',
+          false, (result) => {
+            if (result != null || result != '') {
+              setDiscordState("9anime_logo", "9Anime", "Watching a video:", result);
+            }
+          });
       }
     });
 
@@ -370,9 +405,11 @@
       } else if (webview.getURL().match(/twitch.tv/g)) {
         //TODO: Add rich presence for twitch
         console.log("twitch")
+        setDiscordState("twitch_logo", "Twitch", "Just browsing", "Looking for a stream");
       } else if (webview.getURL().match(/9anime/g)) {
         //TODO: Add rich presence for 9anime
         console.log("9anime")
+        setDiscordState("9anime_logo", "9Anime", "Just browsing", "Looking for an anime");
       }
     });
   </script>

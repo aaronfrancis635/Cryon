@@ -14,7 +14,6 @@ ipcMain.on('setDisc', (event, arg) => {
     state: arg[3],
     details: arg[2],
     startTimestamp: Date.now(),
-    endTimestamp: Date.parse("July 16, 2019"),
     largeImageKey: arg[0],
     largeImageText: arg[1],
     instance: true,
