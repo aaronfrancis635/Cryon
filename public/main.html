@@ -366,12 +366,12 @@
 
     var isFrameAdHooked = false;
     var knownAdHosts = [];
-    setInterval(()=>{},5000)
     fetch('https://raw.githubusercontent.com/brokenbroadcaster/cryonAdHosts/master/hosts.txt')
     .then((response) => response.text().then((hosts) => {
       knownAdHosts = hosts.toString().split(',')
       console.log("Testing KnownAds: " + knownAdHosts.includes("twitch.tv"))
-     }));
+    }));
+
 
 
     webview.addEventListener('load-commit', (event) => {
