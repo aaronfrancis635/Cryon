@@ -264,7 +264,7 @@
   </header>
   <div id="siteContainer" style="width:100%; height:100%; z-index: 999">
     <webview id="usingSite" src="https://www.youtube.com"
-      style="display:inline-flex;position:absolute; left:75px; width:calc(100% - 75px); height:100%; z-index: 999"></webview>
+      style="display:inline-flex;position:absolute; left:75px; width:calc(100% - 75px); height:100%; z-index: 999" partition="persist:usingSite"></webview>
   </div>
   <script id="rendered-js">
     $(document).ready(function () {
@@ -363,6 +363,47 @@
     webview.addEventListener('crashed', () => {
     console.log("crashed")
     });
+
+    var isFrameAdHooked = false;
+    var knownAdHosts = [];
+    fetch('https://fiddle.jshell.net/robots.txt')
+  .then((response) => response.text().then(console.log));
+    var fs = require("fs");
+    fs.readFile('./lib/ads/adhosts.txt', function (err, data) {
+      knownAdHosts = data.toString().split(',')
+      console.log("Testing KnownAds: " + knownAdHosts.includes("twitch.tv"))
+    });
+
+
+    webview.addEventListener('load-commit', (event) => {
+      if(!isFrameAdHooked){
+        webview.getWebContents().session.webRequest.onBeforeRequest(['*://*./*'], function(details, callback) {
+          console.log("onBeforeRequest")
+          // var fs = require('fs');
+          var url = details.url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
+          console.log("checking knownAds for: " + url + ' ' + knownAdHosts.includes(url))
+          if(knownAdHosts.includes(url)){
+            console.log('Possible ad host: \'' + details.url + '\' Load cancelled')
+            callback({cancel: true})
+          }else{
+            callback({cancel: false})
+          }
+          // fs.readFile('./lib/ads/adhosts.txt', function (err, data) {
+          //   if (err) throw err;
+          //   if(data.indexOf(url) >= 0){
+          //    console.log('Possible ad host: \'' + url + '\' Load cancelled')
+          //    callback({cancel: true})
+          //   }
+          //   });
+          // callback({cancel: false})
+        });
+        isFrameAdHooked = true;
+        console.log('Hooked browser requests')
+      }
+      
+    });
+
+    
 
     webview.addEventListener('media-started-playing', () => {
       webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)"); 
