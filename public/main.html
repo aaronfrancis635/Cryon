@@ -326,9 +326,9 @@
     })();
 
 
-
     const {
-      ipcRenderer
+      ipcRenderer,
+      dialog
     } = require('electron');
     ipcRenderer.on('setDiscSucc', (event, arg) => {
       console.log(arg)
@@ -356,12 +356,16 @@
       document.getElementById('TwitchButton').classList.remove("active")
     }
 
-    function setDiscordState(img, site, action, title) {
-      ipcRenderer.send('setDisc', [img, site, action, title]);
+    function setDiscordState(img, site, action, title, endstamp) {
+      if(!endstamp){
+        endstamp = 1;
+      }
+      ipcRenderer.send('setDisc', [img, site, action, title, endstamp]);
     }
     
     webview.addEventListener('crashed', () => {
     console.log("crashed")
+    dialog.showErrorBox("Crashed", "[ERROR 0x00001] Renderer proccess crashed!")
     });
 
     var isFrameAdHooked = false;
@@ -369,7 +373,6 @@
     fetch('https://raw.githubusercontent.com/brokenbroadcaster/cryonAdHosts/master/hosts.txt')
     .then((response) => response.text().then((hosts) => {
       knownAdHosts = hosts.toString().split(',')
-      console.log("Testing KnownAds: " + knownAdHosts.includes("twitch.tv"))
     }));
 
 
@@ -377,10 +380,10 @@
     webview.addEventListener('load-commit', (event) => {
       if(!isFrameAdHooked){
         webview.getWebContents().session.webRequest.onBeforeRequest(['*://*./*'], function(details, callback) {
-          console.log("onBeforeRequest")
+          //console.log("onBeforeRequest")
           // var fs = require('fs');
           var url = details.url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "").split('/')[0];
-          console.log("checking knownAds for: " + url + ' ' + knownAdHosts.includes(url))
+          //console.log("checking knownAds for: " + url + ' ' + knownAdHosts.includes(url))
           if(knownAdHosts.includes(url)){
             console.log('Possible ad host: \'' + details.url + '\' Load cancelled')
             callback({cancel: true})
@@ -402,7 +405,10 @@
       
     });
 
-    
+    //9anime-elapsed: "#jw > div.jw-wrapper.jw-reset > div.jw-controls.jw-reset > div.jw-controlbar.jw-reset > div.jw-reset.jw-button-container > div.jw-icon.jw-icon-inline.jw-text.jw-reset.jw-text-elapsed"
+    //9anime-duration-left: "#jw > div.jw-wrapper.jw-reset > div.jw-controls.jw-reset > div.jw-controlbar.jw-reset > div.jw-reset.jw-button-container > div.jw-icon.jw-icon-inline.jw-text.jw-reset.jw-text-duration"
+    //youtube-duration: "#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div > span.ytp-time-duration"
+
 
     webview.addEventListener('media-started-playing', () => {
       webview.executeJavaScript("document.querySelector('html').setAttribute('dark', true)"); 
@@ -411,8 +417,54 @@
         console.log("youtube")
         webview.executeJavaScript('document.querySelector("#container > h1 > yt-formatted-string").innerText',
           false, (result) => {
+            var title = result;
             if (result != null || result != '') {
-              setDiscordState("youtube_logo", "YouTube", "Watching a video:", result);
+              webview.executeJavaScript('document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div > span.ytp-time-duration").innerHTML',
+          false, (result) => {
+            console.log("Duration: "+result) //time--played
+            var totaltime = result.split(':').map(Number);
+            totaltime = totaltime.reverse();
+            if(totaltime.length == 2){
+              totaltime.push(0)
+            }
+            var endtimestamp = 0;
+            totaltime.forEach((stamp) => {
+              if(totaltime.indexOf(stamp)==0){
+                endtimestamp = endtimestamp + (stamp)
+              }else if(totaltime.indexOf(stamp)==1){
+                endtimestamp = endtimestamp + (stamp * 60)
+              }else if(totaltime.indexOf(stamp)==2){
+                endtimestamp = endtimestamp + (stamp * 3600)
+              }
+              
+            })
+            console.log((Date.now()/1000 + endtimestamp))
+
+            webview.executeJavaScript('document.querySelector("#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div > span.ytp-time-current").innerHTML',
+          false, (result) => {
+            console.log("Time in: "+result) //time--played
+            var totaltime = result.split(':').map(Number);
+            totaltime = totaltime.reverse();
+            if(totaltime.length == 2){
+              totaltime.push(0)
+            }
+            var starttimestamp = 0;
+            totaltime.forEach((stamp) => {
+              if(totaltime.indexOf(stamp)==0){
+                starttimestamp = starttimestamp + (stamp)
+              }else if(totaltime.indexOf(stamp)==1){
+                starttimestamp = starttimestamp + (stamp * 60)
+              }else if(totaltime.indexOf(stamp)==2){
+                starttimestamp = starttimestamp + (stamp * 3600)
+              }
+              
+            })
+            
+            setDiscordState("youtube_logo", "YouTube", "Watching a video:", title, Math.floor(Date.now()/1000 + endtimestamp - starttimestamp));
+          });
+
+           
+          });
             }
           });
       } else if (webview.getURL().match(/twitch.tv/g)) {
@@ -427,6 +479,10 @@
       } else if (webview.getURL().match(/9anime/g)) {
         //TODO: Add rich presence for 9anime
         console.log("9anime")
+        webview.executeJavaScript('document.querySelector("#jw > div.jw-wrapper.jw-reset > div.jw-controls.jw-reset > div.jw-controlbar.jw-reset > div.jw-reset.jw-button-container > div.jw-icon.jw-icon-inline.jw-text.jw-reset.jw-text-elapsed").innerHTML',
+          true, (result) => {
+            console.log("Time played: "+result) //time--played
+          });
         webview.executeJavaScript('document.querySelector("#main > div > div.widget.player > div.widget-title > h1").innerText',
           false, (result) => {
             if (result != null || result != '') {

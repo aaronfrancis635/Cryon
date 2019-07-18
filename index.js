@@ -1,9 +1,13 @@
 const {
   app,
   BrowserWindow,
-  ipcMain
+  ipcMain,
+  dialog
 } = require('electron')
 const client = require('discord-rich-presence')('600363615337447437');
+const got = require('got');
+
+const APIurl = "http://mazeservers.net/api/cryon/v1/";
 
 
 
@@ -14,6 +18,7 @@ ipcMain.on('setDisc', (event, arg) => {
     state: arg[3],
     details: arg[2],
     startTimestamp: Date.now(),
+    endTimestamp: arg[4],
     largeImageKey: arg[0],
     largeImageText: arg[1],
     instance: true,
@@ -23,6 +28,8 @@ ipcMain.on('setDisc', (event, arg) => {
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+
+let updateInfo;
 
 function createWindow() {
 
@@ -60,8 +67,8 @@ function createWindow() {
   loading.loadURL(`file://${__dirname}/public/loading/index.html`)
   loading.show()
   // Open the DevTools.
-  win.webContents.openDevTools()
-  loading.webContents.openDevTools()
+  // win.webContents.openDevTools()
+  // loading.webContents.openDevTools()
 
   // Emitted when the window is closed.
   win.on('closed', () => {
@@ -72,10 +79,45 @@ function createWindow() {
   })
 }
 
+
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', async () => {
+  
+    try {
+      const response = await got(APIurl + "?action=update", {json: true});
+      console.log(response.body.reason)
+      if(response.body.version != "1.3.8"){
+        console.log("UPDATE!!!")
+        dialog.showMessageBox({type: "question", buttons: ["Yes, update now", "No, update later"], defaultId: 0, title: "Update Available", message: "An update is available\nChangelog:\n" + response.body.reason, cancelId: 1}, (response) => {
+          if(response == 1){
+            createWindow();
+          }else{
+            app.quit();
+            var fs = require('fs');
+            var spawn = require('child_process').spawn;
+            var out = fs.openSync('./out.log', 'a');
+            var err = fs.openSync('./out.log', 'a');
+
+            var child = spawn('./CryonUpdater.exe', [], {
+              detached: true,
+              stdio: [ 'ignore', out, err ]
+            });
+
+            child.unref();
+          }
+        });
+      }else{
+        createWindow();
+      }
+    } catch (error) {
+      console.log(error.response.body);
+      dialog.showErrorBox("Error", "[ERROR 0x00000] Unknown Error Occured")
+    }
+  
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
