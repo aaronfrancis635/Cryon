@@ -6,8 +6,13 @@ const {
 } = require('electron')
 const client = require('discord-rich-presence')('600363615337447437');
 const got = require('got');
+const io = require('socket.io-client');
 
 const APIurl = "http://mazeservers.net/api/cryon/v1/";
+
+
+
+
 
 
 
@@ -85,11 +90,19 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
-  
+  const socket = io('http://192.168.1.92:5000')
+
+  socket.on("UPDATE", (data) => {
+
+    console.log("data: " + data)
+
+  });
+
+
     try {
       const response = await got(APIurl + "?action=update", {json: true});
       console.log(response.body.reason)
-      if(response.body.version != "1.3.8"){
+      if(response.body.version != "1.3.9"){
         console.log("UPDATE!!!")
         dialog.showMessageBox({type: "question", buttons: ["Yes, update now", "No, update later"], defaultId: 0, title: "Update Available", message: "An update is available\nChangelog:\n" + response.body.reason, cancelId: 1}, (response) => {
           if(response == 1){
