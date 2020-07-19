@@ -19,7 +19,7 @@
   "homepage": "https://github.com/brokenbroadcaster/Cryon#readme",
   "dependencies": {
     "discord-rich-presence": "0.0.8",
-    "electron": "^5.0.6",
+    "electron": "^7.2.4",
     "got": "^9.6.0",
     "jquery": "^3.5.0",
     "socket.io-client": "^2.2.0"
